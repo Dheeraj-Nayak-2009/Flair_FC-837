@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flair FC-837 Calculator</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap');
+
+        /* import local font ttf */
+        @font-face {
+            font-family: '7segment';
+            src: url('Seven Segment.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        :root {
+            --green: linear-gradient(145deg, #00b4e6 0%, #0099cc 50%, #0088bb 100%);
+            --ref: 55;
+            --segoff: #b3c0a3;
+            --segon: rgb(48, 63, 36);
+        }
+        * {
+            margin: 0;
+            user-select: none;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #f0f0f0;
+            padding: 20px;
+            position: relative;
+            z-index: -10;
+        }
+
+        .calculator {
+            width: 360px;
+            background: linear-gradient(165deg, #4a4a4a 0%, #363636 50%, #2e2e2e 100%);
+            border-radius: 18px;
+            padding: 16px;
+            box-shadow: 
+                0 25px 60px rgba(0, 0, 0, 0.6),
+                0 8px 20px rgba(0, 0, 0, 0.4),
+                inset 0 1px 2px rgba(255, 255, 255, 0.08);
+            z-index: -2;
+        }
+
+        /* LCD Display - directly on dark background, no white wrapper */
+        .lcd-screen {
+            background: linear-gradient(180deg, #aab89a 0%, #b8c5a8 20%, #b8c5a8 80%, #c2cfb2 100%);
+            padding: 6px 10px;
+            border-radius: 4px;
+            box-shadow: inset 0 1px 10px rgba(0, 0, 0, 0.5);
+            border: 1px solid #8a9580;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 65px;
+        }
+
+        .lcd-text {
+            text-align: right;
+            font-family: '7segment', monospace;
+            font-size: 50px;
+            font-weight: bold;
+            color: #1a1a1a;
+            letter-spacing: 2px;
+            line-height: 1.3;
+        }
+
+        .lcdseg {
+            display: flex;
+            gap: 0px;
+            scale: 0.12 0.2;
+            
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 5px;
+            padding: 0 20px;
+        }
+
+        .power-section {
+            font-size: 6px;
+            color: #c5c5c5;
+            font-weight: 600;
+        }
+        .power-section span {
+            font-weight: bold;
+            background: #ccc;
+            color: #333;
+            padding: 0 5px;
+            /* trapezium shape */
+            clip-path: polygon(10% 0%, 100% 0%, 100% 100%, 0% 100%);
+
+        }
+
+        .brand {
+            background: #2d2d2d00;
+            color: white;
+            padding: 1px 2px;
+            border-radius: 3px;
+            font-weight: bold;
+            font-size: 11px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            border: 1px solid white;
+            border-radius: 5px 0 5px 0;
+            font-family: "Orbitron", sans-serif;
+            font-size: 18px;
+        }
+
+        .model-info {
+            text-align: right;
+        }
+
+        .model-number {
+            font-size: 10px;
+            font-weight: bold;
+            color: #ddd;
+        }
+
+        .digit-count {
+            font-size: 6px;
+            color: #c5c5c5;
+            font-weight: 600;
+        }
+
+        .solar-panel {
+            background: linear-gradient(135deg, hsl(var(--ref), 33%, 46%) 0%, hsl(var(--ref), 32%, 63%) 50%, hsl(var(--ref), 33%, 46%) 100%);
+            height: 30px;
+            border-radius: 2px;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+            border: 1px solid #1a2a35;
+            width: 120px;
+            /* texture */
+            background-size: cover;
+            background-image: url("https://static.wixstatic.com/media/nsplsh_456d39366544524a504438~mv2_d_4000_2660_s_4_2.jpg/v1/fill/w_640,h_486,al_c,q_80,usm_1.20_1.00_0.01,enc_avif,quality_auto/nsplsh_456d39366544524a504438~mv2_d_4000_2660_s_4_2.jpg");
+            /* backdrop-filter: hue-rotate(200deg) brightness(0.8); */
+            /* mask */
+            /* https://previews.123rf.com/images/dykc/dykc1707/dykc170700017/81582024-seamless-vertical-stripe-pattern-in-vector-black-and-white-background.jpg */
+            mask-image: url("https://static.wixstatic.com/media/nsplsh_456d39366544524a504438~mv2_d_4000_2660_s_4_2.jpg/v1/fill/w_640,h_486,al_c,q_80,usm_1.20_1.00_0.01,enc_avif,quality_auto/nsplsh_456d39366544524a504438~mv2_d_4000_2660_s_4_2.jpg");
+            mask-size: cover;
+            display: flex;
+            
+
+        }
+        .chunk {
+            flex: 1;
+            border: 1px solid rgba(0, 0, 0, 0.3);
+        }
+
+        .check-correct {
+            text-align: center;
+            font-size: 5px;
+            color: #dcdcdc;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        /* ON/AC Button - same size as capsule buttons */
+        .onac-section {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 6px;
+        }
+
+        .btn-onac {
+            background: linear-gradient(145deg, #00b4e6 0%, #0099cc 50%, #0088bb 100%);
+            border: none;
+            border-radius: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 
+                0 2px 4px rgba(0, 0, 0, 0.4),
+                inset 0 1px 1px rgba(255, 255, 255, 0.2);
+
+            border-radius: 14px;
+            color: #ffffff;
+            font-size: 12px;
+            
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            line-height: 1.1;
+            height: 30px;
+            width: 58.4px;
+        }
+
+        .btn-onac:active {
+            transform: translateY(1px);
+        }
+
+        /* Button Grids Container */
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 13px;
+        }
+
+        /* Grid 1: First Row */
+        .grid-row-1 {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 9px;
+            height: 30px;
+        }
+
+        /* Grids 2, 3, 4 Row */
+        .grids-row {
+            display: flex;
+            gap: 10px;
+            height: 208px;
+        }
+
+        /* Grid 2: Number Grid */
+        .grid-numbers {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 10px;
+            flex: 3;
+        }
+
+        /* Right column for operations and equals grids */
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex: 2;
+        }
+
+        /* Grid 3: Operations Grid */
+        .grid-operations {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 10px;
+            flex: 1;
+        }
+
+        /* Grid 4: Plus and Equals Grid */
+        .grid-equals {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 10px;
+            flex: 0.6;
+        }
+
+        button {
+            border: none;
+            cursor: pointer;
+            font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+            font-weight: 600;
+            transition: all 0.08s;
+            position: relative;
+            outline: none;
+        }
+
+        button:focus {
+            outline: none;
+            box-shadow: none;
+        }
+
+        button::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border-radius: inherit;
+            box-shadow: inset 2px 1px 4px 1px rgba(0, 0, 0, 0.5);
+            z-index: -1;
+            pointer-events: none;
+            transition: all 0.08s;
+        }
+
+        button:active {
+            transform: scale(0.95);
+            filter: brightness(0.9);
+        }
+
+        button:active::after {
+            transform: scale(1.05);
+        }
+
+        /* Keep ON/AC button's ::after unchanged on active */
+        
+        .btn-onac:active {
+            transform: scale(0.95) !important;
+        }
+        .btn-onac:active::after {
+            transform: scale(1.05) !important;
+        }
+
+        /* Capsule buttons - THIN and light gray */
+        .btn-capsule {
+            background: linear-gradient(145deg, #707070 0%, #626262 50%, #565656 100%);
+            border-radius: 14px;
+            color: #ffffff;
+            font-size: 12px;
+            padding: 6px 4px;
+            box-shadow: 
+                0 2px 4px rgba(0, 0, 0, 0.4),
+                inset 0 1px 1px rgba(255, 255, 255, 0.15);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            line-height: 1.1;
+            height: 30px;
+        }
+
+        .btn-capsule .top-label {
+            display: block;
+            font-size: 5px;
+            margin-bottom: 1px;
+            opacity: 0.85;
+            font-weight: 500;
+        }
+
+        /* Rectangular buttons - darker */
+        .btn-rect {
+            background: linear-gradient(145deg, #5a5a5a 0%, #484848 50%, #3e3e3e 100%);
+            border-radius: 5px;
+            color: #ffffff;
+            font-size: 25px;
+            box-shadow: 
+                0 3px 5px rgba(0, 0, 0, 0.5),
+                inset 0 1px 1px rgba(255, 255, 255, 0.12);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            font-weight: 100;
+        }
+
+        /* + button - blue */
+        .btn-plus {
+            background: var(--green);
+            border-radius: 15px;
+            color: #ffffff;
+            font-size: 40px;
+            box-shadow: 
+                0 3px 5px rgba(0, 0, 0, 0.5),
+                inset 0 1px 1px rgba(255, 255, 255, 0.2);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            grid-row: span 2;
+            font-weight: 100;
+        }
+
+        /* = button */
+        .btn-equals {
+            background: linear-gradient(145deg, #5a5a5a 0%, #484848 50%, #3e3e3e 100%);
+            border-radius: 15px;
+            color: #ffffff;
+            font-size: 50px;
+            box-shadow: 
+                0 3px 5px rgba(0, 0, 0, 0.5),
+                inset 0 1px 1px rgba(255, 255, 255, 0.12);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            grid-row: span 2;
+            font-weight: 100;
+        }
+
+        .operator {
+            font-size: 16px;
+        }
+
+        .sqrt-symbol {
+            font-size: 14px;
+        }
+        .circ {
+    background: #ff000000;
+    margin: 0 auto;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    box-shadow: 1px 1px 2px 1px #0000005e, -1px -1px 2px 1px #ffffff21;
+}
+.mid {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 5px;
+}
+.mid::after {
+    content: '';
+    position: absolute;
+    background: linear-gradient(0deg, rgba(147, 147, 147, 0.16), transparent);
+    transform: translateX(-16px) translateY(-9px);
+    width: 360px;
+    height: 50px;
+    z-index: -1;
+    clip-path: path("M 0 0 L 360 0 L 360 15 L 280 15 A 25,25 0,0,0 265 20 L 230 45 A 40,40 0,0,1 210 50 L 0 50 Z");
+}
+.stuff {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    align-items: flex-start;
+    flex-grow: 1;
+}
+.calcyname {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.bezel {
+    padding: 2px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.616);
+    margin-bottom: 5px;
+    border-radius: 2px;
+}
+.bezellcd {
+    padding: 3px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.616);
+    margin-bottom: 6px;
+    border-radius: 6px;
+}
+
+
+
+    </style>
+<style>
+/* Declares the colour variables for the SCSS */
+/* Styling for the body and components */
+
+
+.component {
+  scale: 1;
+  background-color: #33333300;
+  height: 260px;
+  width: 180px;
+  position: relative;
+  display: inline-block;
+}
+
+.segment {
+  background-color: var(--segoff);
+  height: 16px;
+  width: 80px;
+  position: absolute;
+  display: inline-block;
+}
+
+.segment:after {
+  content: "";
+  border-top: 8px transparent solid;
+  border-bottom: 8px transparent solid;
+  border-left: 8px var(--segoff) solid;
+  position: absolute;
+  margin-left: 80px;
+}
+
+.segment:before {
+  content: "";
+  border-top: 8px transparent solid;
+  border-bottom: 8px transparent solid;
+  border-right: 8px var(--segoff) solid;
+  position: absolute;
+  margin-left: -8px;
+}
+
+.decimal {
+  height: 20px;
+  width: 20px;
+  background-color: var(--segoff);
+  position: absolute;
+  top: 216px;
+  left: 150px;
+  border-radius: 10px;
+}
+
+/* Separate positioning for the individual segments */
+.sA {
+  left: 40px;
+  top: 20px;
+}
+
+.sB {
+  transform: rotate(90deg);
+  top: 70px;
+  left: 90px;
+}
+
+.sC {
+  transform: rotate(90deg);
+  top: 170px;
+  left: 90px;
+}
+
+.sD {
+  left: 40px;
+  top: 220px;
+}
+
+.sE {
+  transform: rotate(90deg);
+  top: 170px;
+  left: -10px;
+}
+
+.sF {
+  transform: rotate(90deg);
+  top: 70px;
+  left: -10px;
+}
+
+.sG {
+  top: 120px;
+  left: 40px;
+}
+
+/* Skews the segment display for realism */
+.segmentWrap {
+  transform: skew(-5deg);
+  margin-left: 20px;
+}
+
+/* Styling for the active segments */
+.active {
+  background-color: var(--segon);
+}
+
+.active:after, .active:before {
+  border-right-color: var(--segon);
+  border-left-color: var(--segon);
+}
+
+.controlContainer {
+  display: inline-block;
+  position: relative;
+}
+</style>
+</head>
+<body>
+    <div class="calculator">
+        <!-- LCD Display - no white wrapper -->
+        <div class="bezellcd">
+        <div class="lcd-screen">
+            <!-- <div class="lcd-text">123456789012</div> -->
+            <div class="lcdleft"></div>
+            <div class="lcdseg">
+                <div class="component c1">
+                    <div class="segmentWrap">
+                        <div class="segment sA"></div>
+                        <div class="segment sB"></div>
+                        <div class="segment sC"></div>
+                        <div class="segment sD"></div>
+                        <div class="segment sE"></div>
+                        <div class="segment sF"></div>
+                        <div class="segment sG"></div>
+                    </div>
+                    <div class="decimal"></div>
+                </div>
+                <div class="component c2">
+                    <div class="segmentWrap">
+                        <div class="segment sA"></div>
+                        <div class="segment sB"></div>
+                        <div class="segment sC"></div>
+                        <div class="segment sD"></div>
+                        <div class="segment sE"></div>
+                        <div class="segment sF"></div>
+                        <div class="segment sG"></div>
+                    </div>
+                    <div class="decimal"></div>
+                </div>
+                <div class="component c3">
+                    <div class="segmentWrap">
+                        <div class="segment sA"></div>
+                        <div class="segment sB"></div>
+                        <div class="segment sC"></div>
+                        <div class="segment sD"></div>
+                        <div class="segment sE"></div>
+                        <div class="segment sF"></div>
+                        <div class="segment sG"></div>
+                    </div>
+                    <div class="decimal"></div>
+                </div>
+                <div class="component c4">
+                    <div class="segmentWrap">
+                        <div class="segment sA"></div>
+                        <div class="segment sB"></div>
+                        <div class="segment sC"></div>
+                        <div class="segment sD"></div>
+                        <div class="segment sE"></div>
+                        <div class="segment sF"></div>
+                        <div class="segment sG"></div>
+                    </div>
+                    <div class="decimal"></div>
+                </div>
+                <div class="component c5">
+                    <div class="segmentWrap">
+                        <div class="segment sA"></div>
+                        <div class="segment sB"></div>
+                        <div class="segment sC"></div>
+                        <div class="segment sD"></div>
+                        <div class="segment sE"></div>
+                        <div class="segment sF"></div>
+                        <div class="segment sG"></div>
+                    </div>
+                    <div class="decimal"></div>
+                </div>
+                <div class="component c6">
+                    <div class="segmentWrap">
+                        <div class="segment sA"></div>
+                        <div class="segment sB"></div>
+                        <div class="segment sC"></div>
+                        <div class="segment sD"></div>
+                        <div class="segment sE"></div>
+                        <div class="segment sF"></div>
+                        <div class="segment sG"></div>
+                    </div>
+                    <div class="decimal"></div>
+                </div>
+                <div class="component c7">
+                    <div class="segmentWrap">
+                        <div class="segment sA"></div>
+                        <div class="segment sB"></div>
+                        <div class="segment sC"></div>
+                        <div class="segment sD"></div>
+                        <div class="segment sE"></div>
+                        <div class="segment sF"></div>
+                        <div class="segment sG"></div>
+                    </div>
+                    <div class="decimal"></div>
+                </div>
+                <div class="component c8">
+                    <div class="segmentWrap">
+                        <div class="segment sA"></div>
+                        <div class="segment sB"></div>
+                        <div class="segment sC"></div>
+                        <div class="segment sD"></div>
+                        <div class="segment sE"></div>
+                        <div class="segment sF"></div>
+                        <div class="segment sG"></div>
+                    </div>
+                    <div class="decimal"></div>
+                </div>
+                <div class="component c9">
+                    <div class="segmentWrap">
+                        <div class="segment sA"></div>
+                        <div class="segment sB"></div>
+                        <div class="segment sC"></div>
+                        <div class="segment sD"></div>
+                        <div class="segment sE"></div>
+                        <div class="segment sF"></div>
+                        <div class="segment sG"></div>
+                    </div>
+                    <div class="decimal"></div>
+                </div>
+                <div class="component c10">
+                    <div class="segmentWrap">
+                        <div class="segment sA"></div>
+                        <div class="segment sB"></div>
+                        <div class="segment sC"></div>
+                        <div class="segment sD"></div>
+                        <div class="segment sE"></div>
+                        <div class="segment sF"></div>
+                        <div class="segment sG"></div>
+                    </div>
+                    <div class="decimal"></div>
+                </div>
+                <div class="component c11">
+                    <div class="segmentWrap">
+                        <div class="segment sA"></div>
+                        <div class="segment sB"></div>
+                        <div class="segment sC"></div>
+                        <div class="segment sD"></div>
+                        <div class="segment sE"></div>
+                        <div class="segment sF"></div>
+                        <div class="segment sG"></div>
+                    </div>
+                    <div class="decimal"></div>
+                </div>
+                <div class="component c12">
+                    <div class="segmentWrap">
+                        <div class="segment sA"></div>
+                        <div class="segment sB"></div>
+                        <div class="segment sC"></div>
+                        <div class="segment sD"></div>
+                        <div class="segment sE"></div>
+                        <div class="segment sF"></div>
+                        <div class="segment sG"></div>
+                    </div>
+                    <div class="decimal"></div>
+                </div>
+
+            </div>
+            <div class="lcdright"></div>
+        </div>
+        </div>
+        
+        <div class="info-row">
+            <div class="power-section"><span>2 POWER</span> ☀ ■</div>
+            <div class="digit-count">12 DIGITS</div>
+        </div>
+        
+        <div class="mid">
+        <div class="bezel"><div class="solar-panel"><div class="chunk"></div><div class="chunk"></div><div class="chunk"></div><div class="chunk"></div></div></div>
+        <div class="stuff">
+            <div class="calcyname">
+            <div class="brand">Flair</div>
+            <div class="model-info">
+                <div class="model-number">FC-837</div>
+            </div>
+            </div>
+            <div class="check-correct">112 STEPS CHECK & CORRECT</div>
+
+        </div>
+            <button class="btn-onac">ON/AC</button></div>
+
+
+        <!-- Button Grids Container -->
+        <div class="button-container">
+            <!-- Grid 1: First Row -->
+            <div class="grid-row-1">
+                <button class="btn-capsule">
+                    <span class="top-label">AUTO</span>
+                    REPLAY
+                </button>
+                <button class="btn-capsule">
+                    <span class="top-label">CORRECT</span>
+                    00→0
+                </button>
+                <button class="btn-capsule">CHECK</button>
+                <button class="btn-capsule operator">%</button>
+                <button class="btn-capsule sqrt-symbol">√</button>
+            </div>
+
+            <!-- Grids 2, 3, 4 in a row -->
+            <div class="grids-row">
+                <!-- Grid 2: Number Grid -->
+                <div class="grid-numbers">
+                    <button class="btn-rect">7</button>
+                    <button class="btn-rect">8</button>
+                    <button class="btn-rect">9</button>
+                    <button class="btn-rect">4</button>
+                    <button class="btn-rect"><div class="circ">5</div></button>
+                    <button class="btn-rect">6</button>
+                    <button class="btn-rect">1</button>
+                    <button class="btn-rect">2</button>
+                    <button class="btn-rect">3</button>
+                    <button class="btn-rect">0</button>
+                    <button class="btn-rect">00</button>
+                    <button class="btn-rect">•</button>
+                </div>
+
+                <!-- Right column with operations and equals grids stacked -->
+                <div class="right-column">
+                    <!-- Grid 3: Operations Grid -->
+                    <div class="grid-operations">
+                        <button class="btn-capsule operator">÷</button>
+                        <button class="btn-capsule">MRC</button>
+                        <button class="btn-capsule operator">×</button>
+                        <button class="btn-capsule">M−</button>
+                        <button class="btn-capsule operator">−</button>
+                        <button class="btn-capsule">M+</button>
+                    </div>
+
+                    <!-- Grid 4: Plus and Equals Grid -->
+                    <div class="grid-equals">
+                        <button class="btn-plus">+</button>
+                        <button class="btn-equals">=</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+//  on click p0lay click.wav and on relelase play release.wav
+document.querySelectorAll('button').forEach(button => {
+    button.addEventListener('mousedown', () => {
+        const clickSound = new Audio('click.wav');
+        clickSound.play();
+    });
+    button.addEventListener('mouseup', () => {
+        const releaseSound = new Audio('release.wav');
+        releaseSound.play();
+    });
+});
+</script>
+<script>
+// Initialize the display segments
+
+var seg = document.getElementsByClassName("segment");
+var dcm = document.getElementsByClassName("decimal");
+
+// Function to reset the display
+
+var resetDisplay = function() {
+  for (i=0; i < seg.length; i++) {
+    seg[i].classList.remove('active');
+  }
+  dcm[0].classList.remove('active');
+}
+
+// Functions to draw numbers on display
+
+var drawOne = function() {
+  resetDisplay();
+  seg[1].classList.add('active');
+  seg[2].classList.add('active');
+}
+
+var drawTwo = function() {
+  resetDisplay();
+  seg[0].classList.add('active');
+  seg[1].classList.add('active');
+  seg[3].classList.add('active');
+  seg[4].classList.add('active');
+  seg[6].classList.add('active');
+}
+
+var drawThree = function() {
+  resetDisplay();
+  seg[0].classList.add('active');
+  seg[1].classList.add('active');
+  seg[2].classList.add('active');
+  seg[3].classList.add('active');
+  seg[6].classList.add('active');
+}
+
+var drawFour = function() {
+  resetDisplay();
+  seg[1].classList.add('active');
+  seg[2].classList.add('active');
+  seg[5].classList.add('active');
+  seg[6].classList.add('active');
+}
+
+var drawFive = function() {
+  resetDisplay();
+  seg[0].classList.add('active');
+  seg[2].classList.add('active');
+  seg[3].classList.add('active');
+  seg[5].classList.add('active');
+  seg[6].classList.add('active');
+}
+
+var drawSix = function() {
+  resetDisplay();
+  seg[0].classList.add('active');
+  seg[2].classList.add('active');
+  seg[3].classList.add('active');
+  seg[4].classList.add('active');
+  seg[5].classList.add('active');
+  seg[6].classList.add('active');
+}
+
+var drawSeven = function() {
+  resetDisplay();
+  seg[0].classList.add('active');
+  seg[1].classList.add('active');
+  seg[2].classList.add('active');
+}
+
+var drawEight = function() {
+  resetDisplay();
+  seg[0].classList.add('active');
+  seg[1].classList.add('active');
+  seg[2].classList.add('active');
+  seg[3].classList.add('active');
+  seg[4].classList.add('active');
+  seg[5].classList.add('active');
+  seg[6].classList.add('active');
+}
+
+var drawNine = function() {
+  resetDisplay();
+  seg[0].classList.add('active');
+  seg[1].classList.add('active');
+  seg[2].classList.add('active');
+  seg[3].classList.add('active');
+  seg[5].classList.add('active');
+  seg[6].classList.add('active');
+}
+
+var drawAll = function() {
+  resetDisplay();
+  seg[0].classList.add('active');
+  seg[1].classList.add('active');
+  seg[2].classList.add('active');
+  seg[3].classList.add('active');
+  seg[4].classList.add('active');
+  seg[5].classList.add('active');
+  seg[6].classList.add('active');
+  dcm[0].classList.add('active');
+}
+
+var drawZero = function() {
+  resetDisplay();
+  seg[0].classList.add('active');
+  seg[1].classList.add('active');
+  seg[2].classList.add('active');
+  seg[3].classList.add('active');
+  seg[4].classList.add('active');
+  seg[5].classList.add('active');
+}
+
+// Initialize the control buttons (only buttons inside .controlContainer)
+// This avoids selecting every button on the page and mis-indexing handlers
+// Light the 12-segment components to display a static number string
+// Clear any existing active classes first
+document.querySelectorAll('.segment').forEach(s => s.classList.remove('active'));
+document.querySelectorAll('.decimal').forEach(d => d.classList.remove('active'));
+
+var DIGIT_MAP = {
+    '0': ['sA','sB','sC','sD','sE','sF'],
+    '1': ['sB','sC'],
+    '2': ['sA','sB','sG','sE','sD'],
+    '3': ['sA','sB','sC','sD','sG'],
+    '4': ['sF','sG','sB','sC'],
+    '5': ['sA','sF','sG','sC','sD'],
+    '6': ['sA','sF','sE','sD','sC','sG'],
+    '7': ['sA','sB','sC'],
+    '8': ['sA','sB','sC','sD','sE','sF','sG'],
+    '9': ['sA','sB','sC','sD','sF','sG']
+};
+
+function setDigit(componentElem, ch) {
+    var segs = DIGIT_MAP[ch];
+    if (!segs) return;
+    segs.forEach(cls => {
+        var el = componentElem.querySelector('.' + cls);
+        if (el) el.classList.add('active');
+    });
+}
+
+var components = document.querySelectorAll('.component');
+var target = '123456789012';
+components.forEach(function(comp, idx) {
+    var ch = target.charAt(idx) || ' ';
+    setDigit(comp, ch);
+});
+</script>
+</html>
